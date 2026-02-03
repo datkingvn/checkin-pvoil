@@ -44,7 +44,10 @@ export default function RaffleStage({
     const lastSeenWinnerIdRef = useRef<string | null>(null);
     const baselineEstablishedRef = useRef(false);
     const stateRef = useRef(state);
-    stateRef.current = state;
+    
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
 
     useEffect(() => {
         spinAudioRef.current = new Audio(SPIN_AUDIO_URL);
@@ -74,6 +77,7 @@ export default function RaffleStage({
         if (!selectedPrizeId && prizes.length > 0) {
             const availablePrize = prizes.find((p) => p.quantityRemaining > 0);
             if (availablePrize && isAdmin) {
+                // eslint-disable-next-line
                 setSelectedPrizeId(availablePrize._id);
                 fetch(`/api/admin/events/${eventId}/draw`, {
                     method: 'PATCH',
@@ -102,12 +106,14 @@ export default function RaffleStage({
 
     // Initial load: lấy lịch sử trúng thưởng hiện có
     useEffect(() => {
+        // eslint-disable-next-line
         fetchWinners();
     }, [fetchWinners]);
 
     // Sau mỗi lượt quay xong (state chuyển sang revealing/complete) mới cập nhật danh sách
     useEffect(() => {
         if (state !== 'revealing' && state !== 'complete') return;
+        // eslint-disable-next-line
         fetchWinners();
     }, [state, fetchWinners]);
 
@@ -255,7 +261,7 @@ export default function RaffleStage({
     const totalWinners = attendees.length - eligibleAttendees.length;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-950 via-slate-950 to-sky-900 text-white flex flex-col">
+        <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-sky-950 via-slate-950 to-sky-900 text-white flex flex-col">
             {/* Top bar */}
             <header className="relative z-10 border-b border-sky-800 bg-gradient-to-r from-sky-950/95 via-sky-900/95 to-blue-900/95 backdrop-blur">
                 <div className="max-w-7xl mx-auto flex flex-col gap-4 px-8 py-5 md:flex-row md:items-center md:justify-between">
@@ -293,172 +299,228 @@ export default function RaffleStage({
             </header>
 
             {/* Main content */}
-            <main className="relative z-10 flex-1">
-                <div className="mx-auto flex h-full max-w-7xl flex-col px-8 py-10">
-                    <div className={`grid flex-1 gap-8 ${isAdmin ? 'md:min-w-[1100px] md:grid-cols-[280px_minmax(0,1fr)_280px]' : ''}`}>
-                        {/* Left column: prizes - only for admin */}
+            <main className="relative z-10 flex-1 overflow-hidden">
+                <div className="mx-auto flex h-full max-w-7xl flex-col px-4 py-4 sm:px-8 sm:py-6">
+                    <div className="flex flex-1 flex-col gap-4 sm:gap-6">
+                        {/* Top row: Stats & Controls (Prizes + Winners) */}
                         {isAdmin && (
-                        <section className="rounded-2xl border border-sky-800 bg-sky-950/60 p-4 shadow-lg">
-                            <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-sky-300">
-                                Cơ cấu giải thưởng
-                            </h2>
-                            <div className="space-y-2">
-                                {prizes.map((p) => {
-                                    const isSelected = selectedPrize && selectedPrize._id === p._id;
-                                    const isExhausted = p.quantityRemaining <= 0;
+                            <div className="grid gap-6 md:grid-cols-2">
+                                {/* Prizes Section */}
+                                <section className="flex flex-col rounded-2xl border border-sky-800 bg-sky-950/60 p-3 shadow-lg h-auto min-h-[200px] max-h-[35vh] overflow-hidden">
+                                    <h2 className="shrink-0 mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-sky-300">
+                                        Cơ cấu giải thưởng
+                                    </h2>
+                                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                                        {prizes.map((p) => {
+                                            const isSelected = selectedPrize && selectedPrize._id === p._id;
+                                            const isExhausted = p.quantityRemaining <= 0;
 
-                                    return (
-                                        <button
-                                            key={p._id}
-                                            type="button"
-                                            onClick={() => {
-                                                if (!isAdmin || state !== 'idle' || isExhausted) return;
-                                                handleSelectPrize(p._id);
-                                            }}
-                                            disabled={isExhausted || !isAdmin}
-                                            className={`w-full rounded-xl px-3 py-2 text-left text-sm transition ${
-                                                isSelected
-                                                    ? 'bg-gradient-to-r from-amber-300 to-yellow-400 text-slate-900 shadow-lg shadow-amber-500/40'
-                                                    : 'bg-slate-950/60 text-slate-100 hover:bg-slate-900/80 disabled:opacity-40'
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between gap-2">
-                                                <span className="font-semibold">{p.name}</span>
-                                                <span className="text-xs font-medium">
-                                                    {p.quantityRemaining}/{p.quantityTotal}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                            return (
+                                                <button
+                                                    key={p._id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!isAdmin || state !== 'idle' || isExhausted) return;
+                                                        handleSelectPrize(p._id);
+                                                    }}
+                                                    disabled={isExhausted || !isAdmin}
+                                                    className={`w-full rounded-xl px-3 py-2 text-left text-sm transition ${
+                                                        isSelected
+                                                            ? 'bg-gradient-to-r from-amber-300 to-yellow-400 text-slate-900 shadow-lg shadow-amber-500/40'
+                                                            : 'bg-slate-950/60 text-slate-100 hover:bg-slate-900/80 disabled:opacity-40'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="font-semibold">{p.name}</span>
+                                                        <span className="text-xs font-medium">
+                                                            {p.quantityRemaining}/{p.quantityTotal}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+
+                                {/* Winners Section */}
+                                <section className="flex flex-col rounded-2xl border border-sky-800 bg-sky-950/60 p-3 h-auto min-h-[200px] max-h-[35vh] overflow-hidden">
+                                    <h2 className="shrink-0 mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-sky-300">
+                                        Danh sách trúng thưởng
+                                    </h2>
+                                    {state === 'spinning' ? (
+                                        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sky-800/80 bg-slate-950/40 px-3 py-6 text-center text-xs text-sky-400">
+                                            Đang quay số...
+                                        </div>
+                                    ) : recentWinners.length === 0 ? (
+                                        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sky-800/80 bg-slate-950/40 px-3 py-6 text-center text-xs text-sky-400">
+                                            Chưa có người trúng thưởng
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+                                            {recentWinners.map((w, idx) => (
+                                                <motion.div
+                                                    key={w._id}
+                                                    initial={{ opacity: 0, x: 20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: 0.1 * idx }}
+                                                    className="rounded-xl bg-slate-950/70 px-3 py-2"
+                                                >
+                                                    <p className="text-sm font-medium text-sky-50">
+                                                        {w.snapshot.fullName}
+                                                    </p>
+                                                    <p className="text-xs text-sky-300">{w.prizeName}</p>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
                             </div>
-                        </section>
                         )}
 
-                        {/* Center column: draw screen */}
-                        <section className="space-y-6">
-                            <div 
-                                className="relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-40"
-                                style={{
-                                    backgroundImage: 'url(/images/nen-quay.jpeg)',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    backgroundRepeat: 'no-repeat'
-                                }}
-                            >
-                                <div className="pointer-events-none absolute inset-0 rounded-3xl bg-black/20" />
-                                {displayPrizeName && (
-                                    <div className="absolute left-6 top-6 z-20 flex flex-col rounded-xl border border-amber-400/60 bg-black/40 px-4 py-3 text-amber-100 shadow-[0_10px_25px_rgba(15,23,42,0.35)] backdrop-blur-lg sm:left-8 sm:top-8">
-                                        <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-amber-200/80">
-                                            Giải đang quay
-                                        </span>
-                                        <span className="mt-1 text-lg font-bold uppercase tracking-wide">
-                                            {displayPrizeName}
-                                        </span>
-                                    </div>
-                                )}
-                                <div className="relative z-10">
-                                <AnimatePresence mode="wait">
-                                    {(state === 'idle' || state === 'spinning') && (
-                                        <motion.div
-                                            key="reel"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="flex flex-col items-center gap-6"
-                                        >
-                                            <RollingNameReel
-                                                participants={eligibleAttendees}
-                                                winner={currentWinner?.snapshot || null}
-                                                isSpinning={state === 'spinning'}
-                                                onComplete={handleSpinComplete}
-                                                onReelLocked={setLockedReelCount}
-                                            />
-                                        </motion.div>
-                                    )}
+                        {/* Center: Draw Screen (Full Width) - Fits remaining space */}
+                        <section className="flex-1 min-h-0 flex flex-col relative">
+                            {/* Container wrapper to constrain aspect ratio */}
+                             <div className="relative w-full h-full flex items-center justify-center">
+                                <div 
+                                    className="relative w-full max-h-full aspect-[1919/956] overflow-hidden rounded-3xl shadow-2xl"
+                                    style={{
+                                        backgroundImage: 'url(/images/nen-quay.jpeg)',
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        backgroundRepeat: 'no-repeat',
+                                        aspectRatio: '1919/956'
+                                    }}
+                                >
+                                    <div className="pointer-events-none absolute inset-0 bg-black/10" />
+                                    
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                                        <AnimatePresence mode="wait">
+                                            {(state === 'idle' || state === 'spinning') && (
+                                                <motion.div
+                                                    key="reel"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    className="w-full"
+                                                >
+                                                    <RollingNameReel
+                                                        participants={eligibleAttendees}
+                                                        winner={currentWinner?.snapshot || null}
+                                                        isSpinning={state === 'spinning'}
+                                                        onComplete={handleSpinComplete}
+                                                        onReelLocked={setLockedReelCount}
+                                                    />
+                                                </motion.div>
+                                            )}
 
-                                    {(state === 'revealing' || state === 'complete') && currentWinner && (
-                                        <motion.div
-                                            key="reveal"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                        >
-                                            <WinnerReveal
-                                                winner={currentWinner.snapshot}
-                                                prizeName={currentWinner.prizeName || selectedPrize?.name || ''}
-                                            />
-                                        </motion.div>
+                                            {(state === 'revealing' || state === 'complete') && currentWinner && (
+                                                <motion.div
+                                                    key="reveal"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    className="w-full flex justify-center"
+                                                >
+                                                    <WinnerReveal
+                                                        winner={currentWinner.snapshot}
+                                                        prizeName={currentWinner.prizeName || selectedPrize?.name || ''}
+                                                    />
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
+                                    {displayPrizeName && (
+                                        <div className="absolute left-[3%] top-[5%] z-20 flex flex-col rounded-xl border border-amber-400/60 bg-black/40 px-6 py-4 text-amber-100 shadow-xl backdrop-blur-lg">
+                                            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-200/80">
+                                                Giải đang quay
+                                            </span>
+                                            <span className="mt-1 text-2xl font-bold uppercase tracking-wide">
+                                                {displayPrizeName}
+                                            </span>
+                                        </div>
                                     )}
-                                </AnimatePresence>
                                 </div>
                             </div>
 
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex flex-col items-center gap-3 pt-2"
-                            >
-                                {error && (
-                                    <motion.p
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="text-sm text-red-400"
+                            {/* Controls Overlay - Positioned absolute at bottom center of the SECTION */}
+                            <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 z-30 w-full flex justify-center pointer-events-none">
+                                <div className="pointer-events-auto">
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="flex flex-col items-center gap-2"
                                     >
-                                        ⚠️ {error}
-                                    </motion.p>
-                                )}
+                                        {error && (
+                                            <p className="text-sm text-red-400 bg-black/80 px-4 py-2 rounded-lg border border-red-500/50 backdrop-blur-md mb-2">
+                                                ⚠️ {error}
+                                            </p>
+                                        )}
 
-                                {isAdmin && state === 'idle' && (
-                                    <Button
-                                        onClick={handleDraw}
-                                        disabled={!canDraw}
-                                        size="lg"
-                                        className="h-16 w-full max-w-md rounded-full bg-red-600 text-2xl font-semibold tracking-wide shadow-[0_0_24px_rgba(248,113,113,0.65)] transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        BẮT ĐẦU QUAY
-                                    </Button>
-                                )}
+                                        {isAdmin && state === 'idle' && (
+                                            <Button
+                                                onClick={handleDraw}
+                                                disabled={!canDraw}
+                                                size="lg"
+                                                className="h-14 w-60 rounded-full bg-red-600 text-xl font-bold tracking-wider shadow-[0_0_30px_rgba(220,38,38,0.6)] hover:bg-red-500 hover:shadow-[0_0_40px_rgba(220,38,38,0.8)] hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                                            >
+                                                QUAY SỐ
+                                            </Button>
+                                        )}
 
-                                {state === 'spinning' && (
-                                    <Button
-                                        disabled
-                                        size="lg"
-                                        className="h-16 w-full max-w-md rounded-full bg-slate-800 text-2xl font-semibold"
-                                    >
-                                        <span className="mr-3 inline-block h-6 w-6 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />
-                                        Đang quay...
-                                    </Button>
-                                )}
+                                        {state === 'spinning' && (
+                                            <Button disabled size="lg" className="h-14 w-60 rounded-full bg-slate-800/90 text-xl backdrop-blur-md border border-slate-700">
+                                                <span className="mr-3 inline-block h-5 w-5 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />
+                                                ĐANG QUAY...
+                                            </Button>
+                                        )}
 
-                                {(state === 'revealing' || state === 'complete') && isAdmin && (
-                                    <Button
-                                        onClick={handleContinue}
-                                        size="lg"
-                                        className="h-14 w-full max-w-xs rounded-full bg-emerald-600 text-lg font-semibold hover:bg-emerald-500"
-                                    >
-                                        {selectedPrize && selectedPrize.quantityRemaining > 1
-                                            ? 'Quay tiếp'
-                                            : 'Hoàn thành'}
-                                    </Button>
-                                )}
+                                        {(state === 'revealing' || state === 'complete') && isAdmin && (
+                                            <div className="flex gap-4">
+                                                {selectedPrize && selectedPrize.quantityRemaining > 1 && (
+                                                    <Button
+                                                        onClick={handleContinue}
+                                                        size="lg"
+                                                        className="h-14 w-48 rounded-full bg-emerald-600 text-lg font-bold shadow-[0_0_30px_rgba(5,150,105,0.6)] hover:bg-emerald-500 hover:shadow-[0_0_40px_rgba(5,150,105,0.8)] hover:scale-105 transition-all"
+                                                    >
+                                                        QUAY TIẾP
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    onClick={() => {
+                                                        setState('idle');
+                                                        setCurrentWinner(null);
+                                                        onRefresh();
+                                                    }}
+                                                    size="lg"
+                                                    variant="outline"
+                                                    className="h-14 w-auto px-6 rounded-full border-sky-500/50 bg-sky-950/50 text-sky-200 hover:bg-sky-900/80"
+                                                >
+                                                    KẾT THÚC
+                                                </Button>
+                                            </div>
+                                        )}
 
-                                {!canDraw && state === 'idle' && isAdmin && (
-                                    <p className="text-center text-xs text-sky-300">
-                                        {eligibleAttendees.length === 0
-                                            ? 'Không còn người đủ điều kiện'
-                                            : !selectedPrize
-                                                ? 'Vui lòng chọn giải thưởng ở cột bên trái'
-                                                : selectedPrize.quantityRemaining <= 0
-                                                    ? 'Giải thưởng này đã hết'
-                                                    : ''}
-                                    </p>
-                                )}
-                            </motion.div>
+                                        {!canDraw && state === 'idle' && isAdmin && (
+                                            <div className="bg-black/60 backdrop-blur px-4 py-2 rounded-lg border border-white/10">
+                                                <p className="text-center text-xs text-sky-300 font-medium">
+                                                    {eligibleAttendees.length === 0
+                                                        ? 'HẾT NGƯỜI ĐỦ ĐIỀU KIỆN'
+                                                        : !selectedPrize
+                                                            ? 'VUI LÒNG CHỌN GIẢI'
+                                                            : selectedPrize.quantityRemaining <= 0
+                                                                ? 'GIẢI NÀY ĐÃ HẾT'
+                                                                : ''}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                </div>
+                            </div>
                         </section>
 
-                        {/* Right column: recent winners - only for admin */}
-                        {isAdmin && (
+                        {/* Guest View: Recent Winners List */}
+                        {!isAdmin && (
                         <section className="flex flex-col rounded-2xl border border-sky-800 bg-sky-950/60 p-4">
                             <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-sky-300">
                                 Danh sách trúng thưởng
@@ -472,12 +534,12 @@ export default function RaffleStage({
                                     Chưa có người trúng thưởng
                                 </div>
                             ) : (
-                                <div className="space-y-3 overflow-y-auto pr-1">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                     {recentWinners.map((w, idx) => (
                                         <motion.div
                                             key={w._id}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: 0.1 * idx }}
                                             className="rounded-xl bg-slate-950/70 px-3 py-2"
                                         >
@@ -492,42 +554,8 @@ export default function RaffleStage({
                         </section>
                         )}
                     </div>
+                    </div>
 
-                    {/* Recent winners section below - only for guest */}
-                    {!isAdmin && (
-                    <section className="mt-8 flex flex-col rounded-2xl border border-sky-800 bg-sky-950/60 p-4">
-                        <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-sky-300">
-                            Danh sách trúng thưởng
-                        </h2>
-                        {state === 'spinning' ? (
-                            <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sky-800/80 bg-slate-950/40 px-3 py-6 text-center text-xs text-sky-400">
-                                Đang quay số, kết quả sẽ hiển thị sau khi quay xong.
-                            </div>
-                        ) : recentWinners.length === 0 ? (
-                            <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sky-800/80 bg-slate-950/40 px-3 py-6 text-center text-xs text-sky-400">
-                                Chưa có người trúng thưởng
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                {recentWinners.map((w, idx) => (
-                                    <motion.div
-                                        key={w._id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 * idx }}
-                                        className="rounded-xl bg-slate-950/70 px-3 py-2"
-                                    >
-                                        <p className="text-sm font-medium text-sky-50">
-                                            {w.snapshot.fullName}
-                                        </p>
-                                        <p className="text-xs text-sky-300">{w.prizeName}</p>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-                    )}
-                </div>
             </main>
         </div>
     );
