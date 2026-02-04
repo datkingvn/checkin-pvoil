@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import { Event, Winner, Attendee, Prize } from '@/models';
 import type { ApiResponse } from '@/types';
@@ -13,13 +12,9 @@ export async function POST(
     { params }: RouteParams
 ): Promise<NextResponse<ApiResponse<null>>> {
     try {
-        const session = await auth();
-        if (!session || (session.user as { role?: string }).role !== 'admin') {
-            return NextResponse.json(
-                { success: false, error: 'Unauthorized' },
-                { status: 401 }
-            );
-        }
+        // Auth check removed for Kiosk/Public usage
+        // const session = await auth();
+        // if (!session || (session.user as { role?: string }).role !== 'admin') { ... }
 
         const { eventId } = await params;
         await dbConnect();
