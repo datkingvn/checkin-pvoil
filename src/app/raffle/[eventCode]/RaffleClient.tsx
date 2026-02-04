@@ -27,8 +27,8 @@ export default function RaffleClient({
     const handleRefresh = useCallback(async () => {
         try {
             const [attendeesRes, prizesRes] = await Promise.all([
-                fetch(`/api/admin/events/${eventId}/attendees`),
-                fetch(`/api/admin/events/${eventId}/prizes`),
+                fetch(`/api/admin/events/${eventId}/attendees`, { cache: 'no-store' }),
+                fetch(`/api/admin/events/${eventId}/prizes`, { cache: 'no-store' }),
             ]);
 
             const [attendeesData, prizesData] = await Promise.all([
@@ -55,7 +55,6 @@ export default function RaffleClient({
             attendees={attendees}
             isAdmin={isAdmin}
             onRefresh={handleRefresh}
-            hideTopBar
         />
     );
 }

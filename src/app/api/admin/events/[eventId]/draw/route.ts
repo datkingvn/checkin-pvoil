@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import { Event, Attendee, Prize, DrawRun, Winner } from "@/models";
-import { auth } from "@/lib/auth";
 import { secureRandomIndex } from "@/lib/crypto-random";
 import type { ApiResponse, DrawResponse } from "@/types";
 
@@ -15,14 +14,6 @@ export async function POST(
   { params }: RouteParams,
 ): Promise<NextResponse<ApiResponse<DrawResponse>>> {
   try {
-    const authSession = await auth();
-    if (!authSession) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const { eventId } = await params;
     const body = await request.json();
     const { prizeId } = body;
@@ -76,7 +67,7 @@ export async function POST(
       {
         eventId: event._id,
         prizeId: prize._id,
-        createdBy: authSession.user?.email || "admin",
+        createdBy: "system",
       },
     ]);
 
@@ -186,14 +177,6 @@ export async function PATCH(
   { params }: RouteParams,
 ): Promise<NextResponse<ApiResponse>> {
   try {
-    const authSession = await auth();
-    if (!authSession) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const { eventId } = await params;
     const body = await request.json();
     const { prizeId } = body;

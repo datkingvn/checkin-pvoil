@@ -1,43 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { Event, Attendee } from '@/models';
-import { createNormalizedKey, isValidString, normalizePhoneNumber, isValidVietnamPhone } from '@/lib/helpers';
+import { createNormalizedKey, isValidString, normalizePhoneNumber } from '@/lib/helpers';
 import type { ApiResponse, AttendeeData, CheckinResponse } from '@/types';
 
-// Simple in-memory rate limiting
-const rateLimitMap = new Map<string, number>();
-const RATE_LIMIT_WINDOW_MS = 5000; // 5 seconds
-const cleanupInterval = setInterval(() => {
-    const now = Date.now();
-    rateLimitMap.forEach((timestamp, key) => {
-        if (now - timestamp > RATE_LIMIT_WINDOW_MS) {
-            rateLimitMap.delete(key);
-        }
-    });
-}, 60000);
-
-// Prevent memory leak in development
-if (typeof window === 'undefined') {
-    process.on('beforeExit', () => clearInterval(cleanupInterval));
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<CheckinResponse>>> {
     try {
-        // Rate limiting by IP
-        const ip = request.headers.get('x-forwarded-for') ||
-            request.headers.get('x-real-ip') ||
-            'unknown';
-
-        const lastRequest = rateLimitMap.get(ip);
-        const now = Date.now();
-
-        if (lastRequest && now - lastRequest < RATE_LIMIT_WINDOW_MS) {
-            return NextResponse.json(
-                { success: false, error: 'Vui lòng đợi vài giây trước khi thử lại' },
-                { status: 429 }
-            );
-        }
-        rateLimitMap.set(ip, now);
 
         // Parse and validate input
         const body = await request.json();
@@ -71,12 +40,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             );
         }
 
-        if (!isValidVietnamPhone(phoneNumber)) {
-            return NextResponse.json(
-                { success: false, error: 'Số điện thoại không hợp lệ. Vui lòng nhập số 10 chữ số (ví dụ: 0912345678)' },
+        // Validate exactly 10 digits
+        const phoneDigits = phoneNumber.replace(/\D/g, '');
+        if (phoneDigits.length !== 10) {
+             return NextResponse.json(
+                { success: false, error: 'Số điện thoại phải bao gồm đúng 10 chữ số (ví dụ: 0912345678)' },
                 { status: 400 }
             );
         }
+
 
         await dbConnect();
 

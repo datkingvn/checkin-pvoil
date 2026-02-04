@@ -12,6 +12,7 @@ import {
     History,
     Users,
     Gift,
+    RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,6 +91,24 @@ export default function EventDetailPage() {
     const [newPrizeQuantity, setNewPrizeQuantity] = useState(1);
     const [savingPrize, setSavingPrize] = useState(false);
 
+    // Reset Event State
+    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
+    
+    // Search Filter
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredAttendees = useMemo(() => {
+        if (!searchQuery.trim()) return attendees;
+        const lowerQuery = searchQuery.toLowerCase().trim();
+        return attendees.filter(a => 
+            a.fullName.toLowerCase().includes(lowerQuery) || 
+            (a.phoneNumber && a.phoneNumber.includes(lowerQuery)) ||
+            a.department.toLowerCase().includes(lowerQuery) ||
+            a.ticketNumber.toString().includes(lowerQuery)
+        );
+    }, [attendees, searchQuery]);
+
     // Toggle excluded from raffle (per-attendee loading)
     const [patchingAttendeeId, setPatchingAttendeeId] = useState<string | null>(null);
     // Delete attendee loading
@@ -158,6 +177,27 @@ export default function EventDetailPage() {
         });
         return map;
     }, [winners]);
+
+    const handleResetEvent = async () => {
+        try {
+            setIsResetting(true);
+            const res = await fetch(`/api/admin/events/${eventId}/reset`, {
+                method: 'POST',
+            });
+            const data = await res.json();
+            if (data.success) {
+                await Promise.all([fetchPrizes(), fetchWinners(), fetchAttendees()]);
+                setIsResetDialogOpen(false);
+            } else {
+                alert(data.error || 'Failed to reset event');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('An error occurred');
+        } finally {
+            setIsResetting(false);
+        }
+    };
 
     const handleStatusChange = async (newStatus: string) => {
         try {
@@ -307,18 +347,18 @@ export default function EventDetailPage() {
                         </SelectContent>
                     </Select>
                     <Link href={`/admin/events/${eventId}/history`}>
-                        <Button variant="outline" className="border-zinc-700 text-zinc-300 gap-2">
+                        <Button variant="outline" className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white gap-2 transition-all">
                             <History size={18} />
                             Lịch sử quay thưởng
                         </Button>
                     </Link>
                     <Link href={`/raffle/${event.code}`} target="_blank">
-                        <Button variant="outline" className="border-zinc-700 text-zinc-300 gap-2">
+                        <Button variant="outline" className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white gap-2 transition-all">
                             <Presentation size={18} />
                             Màn hình quay thưởng
                         </Button>
                     </Link>
-                    <Button variant="destructive" onClick={handleDeleteEvent} className="gap-2">
+                    <Button variant="destructive" onClick={handleDeleteEvent} className="gap-2 shadow-red-900/20 shadow-lg">
                         <Trash2 size={18} />
                         Xóa
                     </Button>
@@ -371,13 +411,43 @@ export default function EventDetailPage() {
 
                 {/* Attendees Tab */}
                 <TabsContent value="attendees">
+                    <div className="flex items-center gap-2 mb-4">
+                         <div className="relative flex-1 max-w-sm">
+                            <Input
+                                placeholder="Tìm theo tên hoặc số điện thoại..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-zinc-900 border-zinc-800 text-white pl-8"
+                            />
+                            <div className="absolute left-2.5 top-2.5 text-zinc-500">
+                                <Users size={16} />
+                            </div>
+                        </div>
+                        {searchQuery && (
+                            <Button 
+                                variant="ghost" 
+                                onClick={() => setSearchQuery('')}
+                                className="text-zinc-400 hover:text-white"
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                        )}
+                    </div>
+
                     <Card className="bg-zinc-900 border-zinc-800">
                         <CardHeader>
-                            <CardTitle className="text-white">Danh sách check-in</CardTitle>
+                            <CardTitle className="text-white">
+                                Danh sách check-in 
+                                <span className="ml-2 text-sm font-normal text-zinc-500">
+                                    (Hiển thị {filteredAttendees.length}/{attendees.length})
+                                </span>
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {attendees.length === 0 ? (
-                                <p className="text-zinc-400 text-center py-8">Chưa có ai check-in</p>
+                            {filteredAttendees.length === 0 ? (
+                                <p className="text-zinc-400 text-center py-8">
+                                    {searchQuery ? 'Không tìm thấy kết quả nào' : 'Chưa có ai check-in'}
+                                </p>
                             ) : (
                                 <Table>
                                     <TableHeader>
@@ -393,7 +463,7 @@ export default function EventDetailPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {attendees.map((a) => (
+                                        {filteredAttendees.map((a) => (
                                             <TableRow key={a._id} className="border-zinc-800">
                                                 <TableCell className="text-white font-mono">
                                                     {formatTicketNumber(a.ticketNumber)}
@@ -441,8 +511,8 @@ export default function EventDetailPage() {
                                                             onClick={() => handleToggleExcluded(a._id, !!a.excludedFromRaffle)}
                                                             className={
                                                                 a.excludedFromRaffle
-                                                                    ? 'border-amber-600 text-amber-400 hover:bg-amber-900/20'
-                                                                    : 'border-zinc-600 text-zinc-400 hover:bg-zinc-800'
+                                                                    ? 'bg-amber-950/30 border-amber-700/50 text-amber-500 hover:bg-amber-900/40 hover:text-amber-400'
+                                                                    : 'bg-zinc-950/30 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-300'
                                                             }
                                                             title={a.excludedFromRaffle ? 'Bỏ loại trừ (cho tham gia quay thưởng)' : 'Loại trừ khỏi quay thưởng'}
                                                         >
@@ -486,7 +556,39 @@ export default function EventDetailPage() {
                     <Card className="bg-zinc-900 border-zinc-800">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-white">Giải thưởng</CardTitle>
-                            <Dialog open={isPrizeDialogOpen} onOpenChange={setIsPrizeDialogOpen}>
+                            <div className="flex gap-2">
+                                <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="destructive" className="bg-red-600 hover:bg-red-700 gap-2">
+                                            <RotateCcw size={18} />
+                                            Reset
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="bg-zinc-900 border-zinc-800">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-white">Reset dữ liệu quay thưởng</DialogTitle>
+                                            <DialogDescription className="text-zinc-400">
+                                                Bạn có chắc chắn muốn xóa toàn bộ lịch sử quay thưởng và reset trạng thái người tham dự? Hành động này không thể hoàn tác.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} className="border-zinc-700 text-zinc-300">
+                                                Hủy
+                                            </Button>
+                                            <Button 
+                                                variant="destructive" 
+                                                onClick={handleResetEvent} 
+                                                disabled={isResetting}
+                                                className="bg-red-600 hover:bg-red-700 gap-2"
+                                            >
+                                                {isResetting ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
+                                                Xác nhận Reset
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                <Dialog open={isPrizeDialogOpen} onOpenChange={setIsPrizeDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button className="bg-purple-600 hover:bg-purple-700 gap-2">
                                         <Plus size={18} />
@@ -543,6 +645,7 @@ export default function EventDetailPage() {
                                     </form>
                                 </DialogContent>
                             </Dialog>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             {prizes.length === 0 ? (

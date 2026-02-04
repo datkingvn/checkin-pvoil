@@ -11,11 +11,8 @@ interface RouteParams {
 // GET attendees for an event
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse<ApiResponse>> {
     try {
-        const session = await auth();
-        if (!session) {
-            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-        }
-
+        // Auth check removed for public access
+        
         const { eventId } = await params;
         await dbConnect();
 
