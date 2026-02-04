@@ -137,12 +137,12 @@ Truy cập: http://localhost:3000
 
 ## 🔗 URLs chính
 
-| URL | Mô tả |
-|-----|-------|
-| `/admin` | Dashboard quản trị |
-| `/admin/events` | Quản lý sự kiện |
+| URL                    | Mô tả                    |
+| ---------------------- | ------------------------ |
+| `/admin`               | Dashboard quản trị       |
+| `/admin/events`        | Quản lý sự kiện          |
 | `/checkin/[eventCode]` | Trang check-in công khai |
-| `/raffle/[eventCode]` | Màn hình quay thưởng |
+| `/raffle/[eventCode]`  | Màn hình quay thưởng     |
 
 ## 🛡️ Bảo mật
 
