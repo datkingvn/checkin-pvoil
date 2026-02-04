@@ -21,7 +21,9 @@ export default async function RafflePage({ params }: RafflePageProps) {
 
     // Get session to check if user is admin
     const session = await auth();
-    const isAdmin = !!session;
+    const isAdminFromSession = !!session;
+    const isDefaultEvent = eventCode.toLowerCase() === 'default-event';
+    const isAdmin = isDefaultEvent ? true : isAdminFromSession;
 
     // Get attendees and prizes
     const [attendees, prizes] = await Promise.all([

@@ -55,6 +55,7 @@ export default function RaffleClient({
             attendees={attendees}
             isAdmin={isAdmin}
             onRefresh={handleRefresh}
+            hideTopBar
         />
     );
 }

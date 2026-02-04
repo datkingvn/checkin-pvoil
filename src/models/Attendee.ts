@@ -68,7 +68,7 @@ const AttendeeSchema = new Schema<IAttendee>(
 
 // Compound indexes for uniqueness and queries
 AttendeeSchema.index({ eventId: 1, ticketNumber: 1 }, { unique: true });
-AttendeeSchema.index({ eventId: 1, normalizedKey: 1 }, { unique: true });
+AttendeeSchema.index({ eventId: 1, normalizedKey: 1 });
 AttendeeSchema.index({ eventId: 1, hasWon: 1 });
 AttendeeSchema.index({ eventId: 1, excludedFromRaffle: 1 });
 AttendeeSchema.index({ eventId: 1, normalizedPhone: 1 }, { unique: true, sparse: true });

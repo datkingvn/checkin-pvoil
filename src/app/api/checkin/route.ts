@@ -116,19 +116,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
             );
         }
 
-        // Also check by normalizedKey for backwards compatibility
-        const existingByKey = await Attendee.findOne({
-            eventId: event._id,
-            normalizedKey,
-        });
-
-        if (existingByKey) {
-            return NextResponse.json(
-                { success: false, error: 'Bạn đã check-in trước đó rồi' },
-                { status: 409 }
-            );
-        }
-
         // Get next ticket number
         const lastAttendee = await Attendee.findOne({ eventId: event._id })
             .sort({ ticketNumber: -1 })

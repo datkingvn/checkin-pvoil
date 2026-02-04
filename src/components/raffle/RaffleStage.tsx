@@ -261,7 +261,15 @@ export default function RaffleStage({
     const totalWinners = attendees.length - eligibleAttendees.length;
 
     return (
-        <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-sky-950 via-slate-950 to-sky-900 text-white flex flex-col">
+        <div
+            className="fixed inset-0 overflow-hidden text-white flex flex-col"
+            style={{
+                backgroundImage: "url(/images/nen-quay.jpeg)",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+            }}
+        >
             {/* Top bar */}
             <header className="relative z-10 border-b border-sky-800 bg-gradient-to-r from-sky-950/95 via-sky-900/95 to-blue-900/95 backdrop-blur">
                 <div className="max-w-7xl mx-auto flex flex-col gap-4 px-8 py-5 md:flex-row md:items-center md:justify-between">
@@ -381,17 +389,7 @@ export default function RaffleStage({
                         <section className="flex-1 min-h-0 flex flex-col relative">
                             {/* Container wrapper to constrain aspect ratio */}
                              <div className="relative w-full h-full flex items-center justify-center">
-                                <div 
-                                    className="relative w-full max-h-full aspect-[1919/956] overflow-hidden rounded-3xl shadow-2xl"
-                                    style={{
-                                        backgroundImage: 'url(/images/nen-quay.jpeg)',
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                        backgroundRepeat: 'no-repeat',
-                                        aspectRatio: '1919/956'
-                                    }}
-                                >
-                                    <div className="pointer-events-none absolute inset-0 bg-black/10" />
+                                <div className="relative w-full max-h-full aspect-[1919/956] overflow-hidden rounded-3xl shadow-2xl bg-transparent">
                                     
                                     <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
                                         <AnimatePresence mode="wait">
