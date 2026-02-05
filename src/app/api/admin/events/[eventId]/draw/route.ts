@@ -103,6 +103,7 @@ export async function POST(
               fullName: selectedAttendee.fullName,
               department: selectedAttendee.department,
               ticketNumber: selectedAttendee.ticketNumber,
+              phoneNumber: selectedAttendee.phoneNumber,
             },
             wonAt: new Date(),
           },
